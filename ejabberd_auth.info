@@ -1,0 +1,5 @@
+name = Ejabberd authentification
+description = Use drupal user with ejabberd
+core = 6.x
+package = XMPP
+version = 0.1
