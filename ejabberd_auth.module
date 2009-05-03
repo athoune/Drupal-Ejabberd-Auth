@@ -33,10 +33,26 @@ function ejabberd_auth_admin_settings() {
 		'#default_value' => variable_get('ejabberd_auth_timeout', '180'),
 		'#description' => t("The secret word, don't keep the default one"),
 	);
+
+	$form['ejabberd_auth_type'] = array(
+		'#type' => 'select',
+		'#title' => 'Script type',
+		'#options' => array(
+			0 => 'Simple',
+			1 => 'Autonomous',
+			),
+		'#default_value' => variable_get('ejabberd_auth_type', 0),
+		'#description' => t('A simple script linked to drupal installation or an autonomous script?'),
+		);
 	return system_settings_form($form);
 }
 
 function ejabberd_auth_admin_settings_validate($form, &$form_state) {
 	if(! is_numeric($form_state['values']['ejabberd_auth_timeout']))
 		form_set_error('ejabberd_auth_timeout', t("Please, I'd like a number"));
+	//[TODO] peut on ecrire dans le dossier
+	//[TODO] creation du script
+	drupal_set_message('The script is available at '
+		. $form_state['values']['ejabberd_auth_path'] 
+		. '/ejabberd_auth.phps');
 }
