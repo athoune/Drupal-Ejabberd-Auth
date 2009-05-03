@@ -32,6 +32,7 @@ class JabberAuth {
 	var $dbuser; /* MySQL user */
 	var $dbpass; /* MySQL password */
 	var $dbbase; /* MySQL database where users are stored */
+	var $hash = 'sha256';
 
 	var $debug 		= true; 				      /* Debug mode */
 	var $debugfile 	= "/tmp/ejabberd-debug.log";  /* Debug output */
@@ -194,7 +195,7 @@ class JabberAuth {
 			list($signature, $login, $timestamp, $token) = explode('|', $this->jabber_pass);
 			if((time() - int($timestamp)) > $this->timeout) //timeout
 				return null;
-			if(hash('sha256', $login . $timestamp . $this->salt) != $token) //oneshot password
+			if(hash($this->hash, $login . $timestamp . $this->salt) != $token) //oneshot password
 				return null;
 			return $this->checkuser();
 		} else { // classical password, be careful, only over SSL!
