@@ -1,58 +1,88 @@
 <?php
 
 function ejabberd_auth_menu() {
-	$items['admin/settings/ejabberd_auth'] = array(
-		'description' => 'Ejabberd auth with drupal users',
-		'title' => 'Ejabberd authentification',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('ejabberd_auth_admin_settings'),
-		'access arguments' => array('administer site configuration'),
-		'type' => MENU_NORMAL_ITEM,
-		);
-	return $items;
+  $items['admin/settings/ejabberd_auth'] = array(
+    'description' => 'Ejabberd auth with drupal users',
+    'title' => 'Ejabberd authentification',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ejabberd_auth_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    );
+  return $items;
 }
 
 function ejabberd_auth_admin_settings() {
-	$form['ejabberd_auth_path'] = array(
-		'#type' => 'textfield',
-		'#title' => 'Script path',
-		'#default_value' => variable_get('ejabberd_auth_path', '/tmp/'),
-		'#description' => t("Where the auth script is generated"),
-	);
+  $form['ejabberd_auth_path'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Script path',
+    '#default_value' => variable_get('ejabberd_auth_path', '/tmp/ejabberd_auth.phps'),
+    '#description' => t("Where the auth script is generated"),
+  );
 
-	$form['ejabberd_auth_salt'] = array(
-		'#type' => 'textfield',
-		'#title' => 'Salt',
-		'#default_value' => variable_get('ejabberd_auth_salt', 'Casimir'),
-		'#description' => t("The secret word, don't keep the default one"),
-	);
+  $form['ejabberd_auth_salt'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Salt',
+    '#default_value' => variable_get('ejabberd_auth_salt', 'Casimir'),
+    '#description' => t("The secret word, don't keep the default one"),
+  );
 
-	$form['ejabberd_auth_timeout'] = array(
-		'#type' => 'textfield',
-		'#title' => 'Timeout',
-		'#default_value' => variable_get('ejabberd_auth_timeout', '180'),
-		'#description' => t("The secret word, don't keep the default one"),
-	);
+  $form['ejabberd_auth_timeout'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Timeout',
+    '#default_value' => variable_get('ejabberd_auth_timeout', '180'),
+    '#description' => t("The secret word, don't keep the default one"),
+  );
 
-	$form['ejabberd_auth_type'] = array(
-		'#type' => 'select',
-		'#title' => 'Script type',
-		'#options' => array(
-			0 => 'Simple',
-			1 => 'Autonomous',
-			),
-		'#default_value' => variable_get('ejabberd_auth_type', 0),
-		'#description' => t('A simple script linked to drupal installation or an autonomous script?'),
-		);
-	return system_settings_form($form);
+  $form['ejabberd_auth_type'] = array(
+    '#type' => 'select',
+    '#title' => 'Script type',
+    '#options' => array(
+      0 => 'Simple',
+      1 => 'Autonomous',
+      ),
+    '#default_value' => variable_get('ejabberd_auth_type', 0),
+    '#description' => t('A simple script linked to drupal installation or an autonomous script?'),
+    );
+  return system_settings_form($form);
 }
 
 function ejabberd_auth_admin_settings_validate($form, &$form_state) {
-	if(! is_numeric($form_state['values']['ejabberd_auth_timeout']))
-		form_set_error('ejabberd_auth_timeout', t("Please, I'd like a number"));
-	//[TODO] peut on ecrire dans le dossier
-	//[TODO] creation du script
-	drupal_set_message('The script is available at '
-		. $form_state['values']['ejabberd_auth_path'] 
-		. '/ejabberd_auth.phps');
+  $clean = TRUE;
+  if(! is_numeric($form_state['values']['ejabberd_auth_timeout'])) {
+    form_set_error('ejabberd_auth_timeout', t("Please, I'd like a number"));
+    $clean = FALSE;
+  }
+  $path = $form_state['values']['ejabberd_auth_path'];
+  if(! is_writable(dirname($path))) {
+    form_set_error('ejabberd_auth_path', t("Path not writable"));
+    $clean = FALSE;
+  }
+  if($clean) {
+    $f = fopen($path, 'w');
+    fwrite($f, "#!/usr/bin/php\n");
+    $inc = dirname(__FILE__) .'/drupalAuth.inc';
+    if(1 == $form_state['values']['ejabberd_auth_type']) {
+      fwrite($f, file_get_contents($inc));
+    } else {
+      fwrite($f, '<' . "?php\ninclude_once '$inc';\n");
+    }
+    $timeout = $form_state['values']['ejabberd_auth_timeout'];
+    $salt = $form_state['values']['ejabberd_auth_salt'];
+    $db = (object)parse_url($GLOBALS['db_url']);
+    fwrite($f, <<<EOD
+\$auth = new JabberAuth();
+\$auth->dbhost = "$db->host";
+\$auth->dbuser = "$db->user";
+\$auth->dbpass = "$db->pass";
+\$auth->dbbase = "$db->path";
+\$auth->salt = '$salt';
+\$auth->timeout = $timeout;
+\$auth->play(); // We simply start process !
+
+EOD
+      );
+    fclose($f);
+    drupal_set_message('The script is available at '. $form_state['values']['ejabberd_auth_path']);
+  }
 }
