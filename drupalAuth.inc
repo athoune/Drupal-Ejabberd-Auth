@@ -25,8 +25,6 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-error_reporting(0);
-
 class JabberAuth {
   var $dbhost; /* MySQL server */
   var $dbuser; /* MySQL user */
@@ -241,4 +239,12 @@ class JabberAuth {
       @syslog(LOG_INFO, $message);
     }
   }
+}
+
+function ejabberd_auth_hash($login) {
+  $salt = variable_get('ejabberd_auth_salt', None);
+  $timestamp = time();
+  $token = hash('sha256', $login . $timestamp . $salt);
+  $signature = array('volatil', $login, $timestamp, $token);
+  return implode('|', $signature);
 }

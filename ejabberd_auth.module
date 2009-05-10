@@ -71,6 +71,8 @@ function ejabberd_auth_admin_settings_validate($form, &$form_state) {
     $salt = $form_state['values']['ejabberd_auth_salt'];
     $db = (object)parse_url($GLOBALS['db_url']);
     fwrite($f, <<<EOD
+error_reporting(0);
+
 \$auth = new JabberAuth();
 \$auth->dbhost = "$db->host";
 \$auth->dbuser = "$db->user";
