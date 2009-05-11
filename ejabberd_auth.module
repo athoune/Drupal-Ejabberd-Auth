@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Implemenation of hook_perm().
+ * [TODO] Maybe hard to implement
+ */
+function ejabberd_auth_perm() {
+  return array('ejabberd_auth');
+}
+
 function ejabberd_auth_menu() {
   $items['admin/settings/ejabberd_auth'] = array(
     'description' => 'Ejabberd auth with drupal users',
