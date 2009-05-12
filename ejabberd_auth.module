@@ -39,7 +39,7 @@ function ejabberd_auth_admin_settings() {
     '#type' => 'textfield',
     '#title' => 'Timeout',
     '#default_value' => variable_get('ejabberd_auth_timeout', '180'),
-    '#description' => t("The secret word, don't keep the default one"),
+    '#description' => t("Timeout"),
   );
 
   $form['ejabberd_auth_type'] = array(
@@ -81,11 +81,7 @@ function ejabberd_auth_admin_settings_validate($form, &$form_state) {
     fwrite($f, <<<EOD
 error_reporting(0);
 
-\$auth = new JabberAuth();
-\$auth->dbhost = "$db->host";
-\$auth->dbuser = "$db->user";
-\$auth->dbpass = "$db->pass";
-\$auth->dbbase = "$db->path";
+\$auth = new JabberAuth('$GLOBALS[db_url]');
 \$auth->salt = '$salt';
 \$auth->timeout = $timeout;
 \$auth->play(); // We simply start process !

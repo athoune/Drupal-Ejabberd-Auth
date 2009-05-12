@@ -52,8 +52,13 @@ class JabberAuth {
   var $stdin;   /* stdin file pointer */
   var $stdout;  /* stdout file pointer */
 
-  function JabberAuth()
+  function __construct($url)
   {
+    $db = (object)parse_url($url);
+    $this->dbhost = $db->host;
+    $this->dbuser = $db->user;
+    $this->dbpass = $db->pass;
+    $this->dbbase = $db->path;
     @define_syslog_variables();
     @openlog("pipe-auth", LOG_NDELAY, LOG_SYSLOG);
     
@@ -189,14 +194,24 @@ class JabberAuth {
      * $this->jabber_server
     */
     $this->jabber_user = mysql_real_escape_string(str_replace("_", " ", $this->jabber_user));
-    if(sizeof($this->jabber_pass) > 8 && substr($this->jabber_pass,0,8) == 'volatil|') {//oneshot magical password
+    $this->logg('#'. substr($this->jabber_pass,0,8) .'#');
+    if(substr($this->jabber_pass,0,8) == 'volatil|') {//oneshot magical password
+      $this->logg('volatil  auth');
       list($signature, $login, $timestamp, $token) = explode('|', $this->jabber_pass);
-      if((time() - int($timestamp)) > $this->timeout) //timeout
+      $this->logg(intval($timestamp));
+      $this->logg($this->timeout);
+      if((time() - intval($timestamp)) > $this->timeout) {//timeout
+        $this->logg('timeout');
+       // return null;
+      }
+      if(hash($this->hash, $login . $timestamp . $this->salt) != $token) {//oneshot password
+        $this->logg('Bad hash');
         return null;
-      if(hash($this->hash, $login . $timestamp . $this->salt) != $token) //oneshot password
-        return null;
+      }
+      $this->logg('Bon timeout, bon hash');
       return $this->checkuser();
     } else { // classical password, be careful, only over SSL!
+      $this->logg('Classical  auth');
       $query = 'select * from users where name = "'.$this->jabber_user.'" and pass     = MD5("'.$this->jabber_pass.'") and status = 1;';
       $res = mysql_query($query);
       return mysql_fetch_assoc($res);
@@ -211,10 +226,9 @@ class JabberAuth {
      * $this->jabber_pass
      * $this->jabber_server
      */
+     $this->logg('User: ' . $this->jabber_user);
     $this->jabber_user = mysql_real_escape_string(str_replace("_", " ", $this->jabber_user));
-    $toto = fopen('/tmp/toto', 'w');
-  fwrite($toto, $this->jabber_user);
-  fclose($toto);
+    $this->logg($this->jabber_user);
     $query = 'select * from users where name = "'.$this->jabber_user.'" and status = 1;';
                 $res = mysql_query($query);
                 return mysql_fetch_assoc($res);
@@ -227,15 +241,20 @@ class JabberAuth {
   
   function mysql() // "MySQL abstraction", this opens a permanent MySQL connection, and fill the ressource
   {
+    $this->logg("Mysql: $this->dbhost $this->dbuser $this->dbpass $this->dbbase");
     $this->mysock = @mysql_pconnect($this->dbhost, $this->dbuser, $this->dbpass);
     @mysql_select_db($this->dbbase, $this->mysock);
-    $this->logg("MySQL :: ". (is_resource($this->mysock) ? "Connect�" : "D�connect�"));
+    $this->logg("MySQL :: ". (is_resource($this->mysock) ? "Connecte" : "Deconnecte"));
   }
   
   function logg($message) // pretty simple, using syslog.
   // some says it doesn't work ? perhaps, but AFAIR, it was working.
   {
     if($this->logging) {
+		$f = fopen('/tmp/drupal.log', 'a+');
+		fwrite($f, $message);
+		fwrite($f, "\n");
+		fclose($f);
       @syslog(LOG_INFO, $message);
     }
   }
