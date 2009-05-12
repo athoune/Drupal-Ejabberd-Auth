@@ -34,7 +34,7 @@ class JabberAuth {
 
   var $debug    = true;               /* Debug mode */
   var $debugfile  = "/tmp/ejabberd-debug.log";  /* Debug output */
-  var $logging  = false;              /* Do we log requests ? */
+  var $logging  = true;              /* Do we log requests ? */
   var $logfile  = "/tmp/ejabberd-log.log" ;   /* Log file ... */
   /*
    * For both debug and logging, ejabberd have to be able to write.
