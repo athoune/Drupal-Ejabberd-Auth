@@ -58,7 +58,7 @@ class JabberAuth {
     $this->dbhost = $db->host;
     $this->dbuser = $db->user;
     $this->dbpass = $db->pass;
-    $this->dbbase = $db->path;
+    $this->dbbase = substr($db->path, 1);
     @define_syslog_variables();
     @openlog("pipe-auth", LOG_NDELAY, LOG_SYSLOG);
     
@@ -202,13 +202,13 @@ class JabberAuth {
       $this->logg($this->timeout);
       if((time() - intval($timestamp)) > $this->timeout) {//timeout
         $this->logg('timeout');
-       // return null;
+        return null;
       }
       if(hash($this->hash, $login . $timestamp . $this->salt) != $token) {//oneshot password
         $this->logg('Bad hash');
         return null;
       }
-      $this->logg('Bon timeout, bon hash');
+      $this->logg('good timeout, good hash');
       return $this->checkuser();
     } else { // classical password, be careful, only over SSL!
       $this->logg('Classical  auth');
