@@ -89,6 +89,7 @@ error_reporting(0);
 EOD
       );
     fclose($f);
+    chmod($path, 0755);
     drupal_set_message('The script is available at '. $form_state['values']['ejabberd_auth_path']);
   }
 }
