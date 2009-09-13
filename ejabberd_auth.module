@@ -1,5 +1,7 @@
 <?php
 
+//[FIXME] creation du script d'auth sans forcement passer par la page d'admin
+
 /**
  * Implemenation of hook_perm().
  * [TODO] Maybe hard to implement
@@ -76,7 +78,7 @@ function ejabberd_auth_admin_settings_validate($form, &$form_state) {
       fwrite($f, '<' . "?php\ninclude_once '$inc';\n");
     }
     $timeout = $form_state['values']['ejabberd_auth_timeout'];
-    $salt = $form_state['values']['ejabberd_auth_salt'];
+    $salt = str_replace("'", "\'", $form_state['values']['ejabberd_auth_salt']);
     $db = (object)parse_url($GLOBALS['db_url']);
     fwrite($f, <<<EOD
 error_reporting(0);

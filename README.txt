@@ -30,5 +30,7 @@ Only Jabber handle new user :
 
 ------------------------------------------------------>8
 
+The script is generated when you save the settings in the drupal admin page.
+
 -- CONTACT --
 Mathieu - http://drupal.org/user/378820
