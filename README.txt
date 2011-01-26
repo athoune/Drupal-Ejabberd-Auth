@@ -30,7 +30,10 @@ Only Jabber handle new user :
 
 ------------------------------------------------------>8
 
-The script is generated when you save the settings in the drupal admin page.
+The script is generated when you save the settings in the drupal admin page :
+/admin/settings/ejabberd_auth
+
+If you are using MAMP, php cli is here : /Applications/MAMP/bin/php5.2/bin/php
 
 -- CONTACT --
 Mathieu - http://drupal.org/user/378820
